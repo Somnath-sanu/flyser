@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthLoadingView } from "@/features/auth/components/auth-loadind-view";
 import { UnauthenticatedView } from "@/features/auth/components/unauthenticated-view";
 import { ClerkProvider, useAuth, UserButton } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
@@ -21,11 +22,16 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <Authenticated><UserButton/>{children}</Authenticated>
+        <Authenticated>
+          <UserButton />
+          {children}
+        </Authenticated>
         <Unauthenticated>
           <UnauthenticatedView />
         </Unauthenticated>
-        <AuthLoading>Auth loading...</AuthLoading>
+        <AuthLoading>
+          <AuthLoadingView />
+        </AuthLoading>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
