@@ -2,7 +2,7 @@
 
 import { AuthLoadingView } from "@/features/auth/components/auth-loadind-view";
 import { UnauthenticatedView } from "@/features/auth/components/unauthenticated-view";
-import { ClerkProvider, useAuth, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import {
   Authenticated,
@@ -23,7 +23,6 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <Authenticated>
-          <UserButton />
           {children}
         </Authenticated>
         <Unauthenticated>
