@@ -50,7 +50,7 @@ const ContinueCard = ({ data }: { data: Doc<"projects"> }) => {
 };
 
 export const ProjectsList = ({ onViewAll }: ProjectsListProps) => {
-  const projects = useProjectsPartial(6);
+  const projects = useProjectsPartial(10);
 
   if (projects === undefined) {
     return <Spinner className="size-4 text-ring" />;

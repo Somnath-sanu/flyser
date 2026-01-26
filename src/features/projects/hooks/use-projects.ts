@@ -3,6 +3,12 @@ import { api } from "../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@clerk/nextjs";
 
+export const useProject = (projectId: Id<"projects">) => {
+  return useQuery(api.projects.getById, {
+    id: projectId,
+  });
+};
+
 export const useProjects = () => {
   return useQuery(api.projects.get);
 };
@@ -35,6 +41,53 @@ export const useCreateProject = () => {
           ...existingProjects,
         ]);
       }
-    }
+    },
+  );
+};
+
+export const useRenameProject = (projectId: Id<"projects">) => {
+  return useMutation(api.projects.rename).withOptimisticUpdate(
+    (localStorage, args) => {
+      const existingProject = localStorage.getQuery(api.projects.getById, {
+        id: projectId,
+      });
+
+      if (existingProject !== undefined && existingProject !== null) {
+        // eslint-disable-next-line react-hooks/purity
+        const now = Date.now();
+
+        localStorage.setQuery(
+          api.projects.getById,
+          {
+            id: projectId,
+          },
+          {
+            ...existingProject,
+            name: args.name,
+            updatedAt: now,
+          },
+        );
+      }
+
+      const existingProjects = localStorage.getQuery(api.projects.get);
+
+      if (existingProjects !== undefined) {
+        // eslint-disable-next-line react-hooks/purity
+        const now = Date.now();
+        localStorage.setQuery(
+          api.projects.get,
+          {},
+          existingProjects.map((p) =>
+            p._id === args.id
+              ? {
+                  ...p,
+                  name: args.name,
+                  updatedAt: now,
+                }
+              : p,
+          ),
+        );
+      }
+    },
   );
 };
