@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { varifyAuth } from "./auth";
+import { Doc, Id } from "./_generated/dataModel";
 
 export const getFiles = query({
   args: {
@@ -82,12 +83,62 @@ export const getFolderContents = query({
 
     return files.sort((a, b) => {
       // Folders come before files
-      if (a.type === "folder" && b.type === "file") return -1;
-      if (a.type === "file" && b.type === "folder") return 1;
+      if (a.type === "folder" && b.type === "file") return -1; // -1 means no swap
+      if (a.type === "file" && b.type === "folder") return 1; // 1 means swap
 
       // Within same type, sort alphabetically by name
       return a.name.localeCompare(b.name);
     });
+  },
+});
+
+/**
+ * Builds the full path to a file by traversing up the parent chain.
+ *
+ * Input:  A file ID (e.g., the ID of "button.tsx")
+ * Output: Array of ancestors from root to file: [{ _id, name: "src" }, { _id, name: "components" }, { _id, name: "button.tsx" }]
+ *
+ * Used for: Breadcrumbs navigation (src > components > button.tsx)
+ */
+
+export const getFilePath = query({
+  args: {
+    id: v.id("files"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await varifyAuth(ctx);
+
+    const file = await ctx.db.get("files", args.id);
+
+    if (!file) {
+      throw new Error("File not found");
+    }
+
+    const project = await ctx.db.get("projects", file.projectId);
+
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    if (project.ownerId !== identity.subject) {
+      throw new Error("Unauthorized access to this project");
+    }
+
+    const path: { _id: string; name: string }[] = [];
+
+    let currentId: Id<"files"> | undefined = args.id;
+
+    while (currentId) {
+      const file = (await ctx.db.get("files", currentId)) as
+        | Doc<"files">
+        | undefined;
+      if (!file) break;
+
+      path.unshift({ _id: file._id, name: file.name });
+      currentId = file.parentId;
+    }
+
+    return path;
   },
 });
 

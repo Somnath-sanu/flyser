@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,13 @@ import { FaGithub } from "react-icons/fa";
 import { ProjectsList } from "./projects-list";
 import { useEffect, useState } from "react";
 import { ProjectsCommandDialog } from "./projects-command-dialog";
+import {
+  adjectives,
+  animals,
+  colors,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
+import { useCreateProject } from "../hooks/use-projects";
 
 const font = Poppins({
   subsets: ["latin"],
@@ -16,6 +24,8 @@ const font = Poppins({
 });
 
 export const ProjectsView = () => {
+  const createProject = useCreateProject();
+
   const [CommandDialogOpen, setCommandDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -48,12 +58,12 @@ export const ProjectsView = () => {
               <img
                 src="/logo.svg"
                 alt="Flyser"
-                className="size-[32px] md:size-[46px]"
+                className="size-8 md:size-11.5"
               />
               <h1
                 className={cn(
                   "text-4xl md:text-5xl font-semibold text-white",
-                  font.className
+                  font.className,
                 )}
               >
                 Flyser
@@ -65,7 +75,17 @@ export const ProjectsView = () => {
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={"outline"}
-                onClick={() => {}}
+                onClick={() => {
+                  const projectName = uniqueNamesGenerator({
+                    dictionaries: [adjectives, animals, colors],
+                    separator: "-",
+                    length: 3,
+                  });
+
+                  createProject({
+                    name: projectName,
+                  });
+                }}
                 className="h-full items-start justify-start p-4 bg-background border flex flex-col gap-6 rounded-none"
               >
                 <div className="flex items-center justify-between w-full">
