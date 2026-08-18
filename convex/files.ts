@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { varifyAuth } from "./auth";
+import { verifyAuth } from "./auth";
 import { Doc, Id } from "./_generated/dataModel";
 
 export const getFiles = query({
@@ -8,7 +8,7 @@ export const getFiles = query({
     projectId: v.id("projects"),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const project = await ctx.db.get("projects", args.projectId);
 
@@ -32,7 +32,7 @@ export const getFile = query({
     id: v.id("files"),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const file = await ctx.db.get("files", args.id);
 
@@ -60,7 +60,7 @@ export const getFolderContents = query({
     parentId: v.optional(v.id("files")),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const project = await ctx.db.get("projects", args.projectId);
 
@@ -106,7 +106,7 @@ export const getFilePath = query({
     id: v.id("files"),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const file = await ctx.db.get("files", args.id);
 
@@ -150,7 +150,7 @@ export const createFile = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const project = await ctx.db.get("projects", args.projectId);
 
@@ -200,7 +200,7 @@ export const createFolder = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const project = await ctx.db.get("projects", args.projectId);
 
@@ -248,7 +248,7 @@ export const renameFile = mutation({
     newName: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const file = await ctx.db.get("files", args.id);
 
@@ -302,7 +302,7 @@ export const deleteFile = mutation({
     id: v.id("files"),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const file = await ctx.db.get("files", args.id);
 
@@ -364,7 +364,7 @@ export const updateFile = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const file = await ctx.db.get("files", args.id);
 

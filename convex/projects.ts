@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { varifyAuth } from "./auth";
+import { verifyAuth } from "./auth";
 
 export const create = mutation({
   args: {
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const projectId = await ctx.db.insert("projects", {
       name: args.name,
@@ -24,7 +24,7 @@ export const getPartial = query({
     limit: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     return await ctx.db
       .query("projects")
@@ -37,7 +37,7 @@ export const getPartial = query({
 export const get = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     return await ctx.db
       .query("projects")
@@ -52,7 +52,7 @@ export const getById = query({
     id: v.id("projects"),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const project = await ctx.db.get("projects", args.id);
 
@@ -74,7 +74,7 @@ export const rename = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await varifyAuth(ctx);
+    const identity = await verifyAuth(ctx);
 
     const project = await ctx.db.get("projects", args.id);
 

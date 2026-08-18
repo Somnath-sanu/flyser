@@ -41,7 +41,7 @@ export const CodeEditor = ({
         customTheme,
         customSetup,
         languageExtension,
-        suggestion(fileName),
+        // suggestion(fileName), // rate-limited soon so disabled for now
         quickEdit(fileName),
         selectionTooltip(),
         keymap.of([indentWithTab]),
