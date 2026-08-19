@@ -34,7 +34,8 @@ import {
 } from "../hooks/use-conversations";
 
 import { Id } from "../../../../convex/_generated/dataModel";
-import { DEFAULT_CONVERSATION_TITLE } from "../../../../convex/constants";
+import { DEFAULT_CONVERSATION_TITLE } from "../constants";
+import { PastConversationsDialog } from "./past-conversations-dialog";
 
 interface ConversationSidebarProps {
   projectId: Id<"projects">;
@@ -49,6 +50,7 @@ export const ConversationSidebar = ({
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null);
   const [input, setInput] = useState("");
+  const [pastConversationsOpen, setPastConversationsOpen] = useState(false);
 
   const activeConversationId =
     selectedConversationId ?? conversations?.[0]?._id ?? null;
@@ -76,10 +78,20 @@ export const ConversationSidebar = ({
     }
   };
 
+  const handleCancel = async () => {
+    try {
+      await ky.post("/api/messages/cancel", {
+        json: { projectId },
+      });
+    } catch {
+      toast.error("Unable to cancel request");
+    }
+  };
+
   const handleSubmit = async (message: PromptInputMessage) => {
     // If processing and no new message, this is just a stop function
     if (isProcessing && !message.text) {
-      // TODO: await handleCancel()
+      await handleCancel();
       setInput("");
       return;
     }
@@ -109,80 +121,98 @@ export const ConversationSidebar = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-sidebar">
-      <div className="h-8.75 flex items-center justify-between border-b">
-        <div className="text-sm truncate pl-3">
-          {activeConversation?.title ?? DEFAULT_CONVERSATION_TITLE}
+    <>
+      <PastConversationsDialog
+        projectId={projectId}
+        open={pastConversationsOpen}
+        onOpenChange={setPastConversationsOpen}
+        onSelect={setSelectedConversationId}
+        activeConversationId={activeConversationId}
+      />
+      <div className="flex flex-col h-full bg-sidebar">
+        <div className="h-8.75 flex items-center justify-between border-b">
+          <div className="text-sm truncate pl-3">
+            {activeConversation?.title ?? DEFAULT_CONVERSATION_TITLE}
+          </div>
+
+          <div className="flex items-center px-1 gap-1">
+            <Button
+              size="icon-xs"
+              variant="highlight"
+              title="History"
+              onClick={() => setPastConversationsOpen(true)}
+            >
+              <HistoryIcon className="size-3.5" />
+            </Button>
+            <Button
+              size="icon-xs"
+              variant="highlight"
+              title="New conversation"
+              onClick={handleCreateConversation}
+            >
+              <PlusIcon className="size-3.5" />
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center px-1 gap-1">
-          <Button size="icon-xs" variant="highlight" title="History">
-            <HistoryIcon className="size-3.5" />
-          </Button>
-          <Button
-            size="icon-xs"
-            variant="highlight"
-            title="New conversation"
-            onClick={handleCreateConversation}
-          >
-            <PlusIcon className="size-3.5" />
-          </Button>
+        <Conversation className="flex-1">
+          <ConversationContent>
+            {conversationMessages?.map((message, messageIndex) => (
+              <Message key={message._id} from={message.role}>
+                <MessageContent>
+                  {message.status === "processing" ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <LoaderIcon className="size-4 animate-spin" />
+                      <span>Thinking...</span>
+                    </div>
+                  ) : message.status === "cancelled" ? (
+                    <span className="text-muted-foreground italic">
+                      Request cancelled
+                    </span>
+                  ) : (
+                    <MessageResponse>{message.content}</MessageResponse>
+                  )}
+                </MessageContent>
+                {message.role === "assistant" &&
+                  message.status === "completed" &&
+                  messageIndex === (conversationMessages?.length ?? 0) - 1 && (
+                    <MessageActions>
+                      <MessageAction
+                        onClick={() => {
+                          navigator.clipboard.writeText(message.content);
+                        }}
+                        label="Copy"
+                      >
+                        <CopyIcon className="size-3" />
+                      </MessageAction>
+                    </MessageActions>
+                  )}
+              </Message>
+            ))}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+
+        <div className="p-3">
+          <PromptInput onSubmit={handleSubmit} className="mt-2">
+            <PromptInputBody>
+              <PromptInputTextarea
+                placeholder="Ask Flyser anything..."
+                onChange={(e) => setInput(e.target.value)}
+                value={input}
+                disabled={isProcessing}
+              />
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools />
+              <PromptInputSubmit
+                disabled={isProcessing ? false : !input}
+                status={isProcessing ? "streaming" : undefined}
+              />
+            </PromptInputFooter>
+          </PromptInput>
         </div>
       </div>
-
-      <Conversation className="flex-1">
-        <ConversationContent>
-          {conversationMessages?.map((message, messageIndex) => (
-            <Message key={message._id} from={message.role}>
-              <MessageContent>
-                {message.status === "processing" ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <LoaderIcon className="size-4 animate-spin" />
-                    <span>Thinking...</span>
-                  </div>
-                ) : (
-                  <MessageResponse>{message.content}</MessageResponse>
-                )}
-              </MessageContent>
-              {message.role === "assistant" &&
-                message.status === "completed" &&
-                messageIndex === (conversationMessages?.length ?? 0) - 1 && (
-                  <MessageActions>
-                    <MessageAction
-                      onClick={() => {
-                        navigator.clipboard.writeText(message.content);
-                      }}
-                      label="Copy"
-                    >
-                      <CopyIcon className="size-3" />
-                    </MessageAction>
-                  </MessageActions>
-                )}
-            </Message>
-          ))}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-
-      <div className="p-3">
-        <PromptInput onSubmit={handleSubmit} className="mt-2">
-          <PromptInputBody>
-            <PromptInputTextarea
-              placeholder="Ask Flyser anything..."
-              onChange={(e) => setInput(e.target.value)}
-              value={input}
-              disabled={isProcessing}
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools />
-            <PromptInputSubmit
-              disabled={isProcessing ? false : !input}
-              status={isProcessing ? "streaming" : undefined}
-            />
-          </PromptInputFooter>
-        </PromptInput>
-      </div>
-    </div>
+    </>
   );
 };
